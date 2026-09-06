@@ -1,5 +1,5 @@
 #!/bin/sh
-# BE3600 A1 / Shanghai Mobile IPTV runtime restoration, v1.0.0
+# BE3600 A1 / Shanghai Mobile IPTV runtime restoration, v1.0.1
 # This is NOT an installer for a boot hook. Use 'boot-probe' first.
 # Commands and topology are based on the user's successful 2026-09-06 test.
 # Driver SHA256 that was analysed:
@@ -41,6 +41,7 @@ note() {
     printf '[uptime %s] %s\n' "$(uptime_s)" "$*" >> "$STATE/log"
 }
 fail() { printf 'ERROR: %s\n' "$*" >&2; return 1; }
+retry() { printf 'RETRY: %s\n' "$*" >&2; return 1; }
 identity() {
     for key in productid odmpid firmver buildno extendno; do
         printf '%s=%s\n' "$key" "$(nvram get "$key")"
@@ -241,7 +242,8 @@ ensure_dns() {
     }
     sleep 2
     [ "$(cat "$SOURCE")" = "$(cat "$STATE/dns-base.next")" ] || { fail 'Firmware config still changing; deferred'; return 1; }
-    [ "$(main_pid)" = "$dp" ] || { fail 'dnsmasq PID changed during preparation; deferred'; return 1; }
+    # ASUS may replace dnsmasq during boot. Defer safely; the watcher retries.
+    [ "$(main_pid)" = "$dp" ] || { retry 'dnsmasq PID changed during preparation; deferred to next cycle'; return 1; }
     # Keep a backup before replacing this script's managed configuration.
     [ ! -f "$STATE/dnsmasq.conf" ] || cp "$STATE/dnsmasq.conf" "$STATE/dnsmasq.previous"
     mv "$STATE/dnsmasq.next" "$STATE/dnsmasq.conf" || return 1

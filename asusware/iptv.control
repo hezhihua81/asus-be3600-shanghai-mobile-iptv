@@ -1,0 +1,5 @@
+Package: iptv
+Version: 1.0.1
+Architecture: all
+Description: BE3600 Shanghai Mobile IPTV runtime autostart hook
+Enabled: yes

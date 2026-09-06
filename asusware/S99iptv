@@ -1,0 +1,22 @@
+#!/bin/sh
+# Asusware init entry for /jffs/be3600-iptv/iptv.sh.
+# app_init_run.sh can invoke both start and firewall-start during one boot.
+# iptv.sh has a single-watcher lock, so concurrent entries are harmless.
+
+IPTV=/jffs/be3600-iptv/iptv.sh
+LOG=/tmp/be3600-iptv-boot.log
+
+case "$1" in
+    start|restart|firewall-start)
+        [ -f "$IPTV" ] || exit 0
+        (
+            echo "[$(date)] Asusware IPTV hook: $1"
+            /bin/sh "$IPTV" autostart
+        ) >>"$LOG" 2>&1 &
+        ;;
+    stop)
+        [ -f "$IPTV" ] && /bin/sh "$IPTV" stop >>"$LOG" 2>&1
+        ;;
+esac
+
+exit 0
